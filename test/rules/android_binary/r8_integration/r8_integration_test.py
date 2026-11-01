@@ -89,6 +89,44 @@ class R8IntegrationTest(unittest.TestCase):
         expect_unused_activity_class=True,
     )
 
+  def _assert_art_profile(self, profile, profile_metadata):
+    self.assertEqual(b"pro\x00010\x00", profile[:8])
+    self.assertEqual(b"prm\x00002\x00", profile_metadata[:8])
+
+  def test_r8_baseline_profile(self):
+    app_directory = "test/rules/android_binary/r8_integration/java/com/basicapp"
+    with zipfile.ZipFile(
+        os.path.join(app_directory, "basic_app_R8_baseline_profile.apk")
+    ) as zf:
+      self._assert_art_profile(
+          zf.read("assets/dexopt/baseline.prof"),
+          zf.read("assets/dexopt/baseline.profm"),
+      )
+
+    with zipfile.ZipFile(
+        os.path.join(
+            app_directory, "basic_app_R8_baseline_profile_aab_unsigned.aab"
+        )
+    ) as zf:
+      self._assert_art_profile(
+          zf.read("BUNDLE-METADATA/com.android.tools.build.profiles/baseline.prof"),
+          zf.read("BUNDLE-METADATA/com.android.tools.build.profiles/baseline.profm"),
+      )
+
+    # The compiled profile dumped against the final dex, i.e. with minified names.
+    with open(
+        os.path.join(app_directory, "basic_app_R8_baseline_profile_primary.prof")
+    ) as f:
+      dumped_profile = f.read()
+    self.assertIn(
+        "Lcom/basicapp/BasicActivity;->onCreate(Landroid/os/Bundle;)V",
+        dumped_profile,
+    )
+    # Only matched by the wildcard rule, and only present if R8 rewrote it to
+    # the renamed listener class.
+    self.assertRegex(dumped_profile, r"onClick\(Landroid/view/View;\)V")
+    self.assertNotIn("BasicActivity$1", dumped_profile)
+
 
 if __name__ == "__main__":
   dexdump = sys.argv.pop()

@@ -13,6 +13,9 @@ py_test(
     srcs = ["r8_integration_test.py"],
     args = ["$(location @androidsdk//:dexdump)"],
     data = [
+        "//test/rules/android_binary/r8_integration/java/com/basicapp:basic_app_R8_baseline_profile",
+        "//test/rules/android_binary/r8_integration/java/com/basicapp:basic_app_R8_baseline_profile_aab_unsigned.aab",
+        "//test/rules/android_binary/r8_integration/java/com/basicapp:basic_app_R8_baseline_profile_primary.prof",
         "//test/rules/android_binary/r8_integration/java/com/basicapp:basic_app_R8_no_shrink",
         "//test/rules/android_binary/r8_integration/java/com/basicapp:basic_app_R8_shrink",
         "//test/rules/android_binary/r8_integration/java/com/basicapp:basic_app_no_R8",

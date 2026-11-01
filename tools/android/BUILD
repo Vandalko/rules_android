@@ -294,6 +294,22 @@ java_binary(
     ],
 )
 
+java_binary(
+    name = "profgen",
+    srcs = ["src/main/java/com/google/devtools/build/android/baselineprofiles/Profgen.java"],
+    jvm_flags = _JVM_FLAGS,
+    main_class = "com.google.devtools.build.android.baselineprofiles.Profgen",
+    visibility = ["//visibility:public"],
+    deps = ["@rules_android_maven//:com_android_tools_build_gradle"],
+)
+
+java_binary(
+    name = "merge_baseline_profiles",
+    srcs = ["src/main/java/com/google/devtools/build/android/baselineprofiles/MergeBaselineProfiles.java"],
+    main_class = "com.google.devtools.build.android.baselineprofiles.MergeBaselineProfiles",
+    visibility = ["//visibility:public"],
+)
+
 alias(
     name = "merge_dexzips",
     actual = "//src/tools/java/com/google/devtools/build/android/ziputils:reducer",

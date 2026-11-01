@@ -200,7 +200,7 @@ _ATTRS = dict(
         executable = True,
     ),
     merge_baseline_profiles_tool = attr.label(
-        default = "@androidsdk//:fail",
+        default = "//tools/android:merge_baseline_profiles",
         cfg = "exec",
         executable = True,
     ),
@@ -216,7 +216,7 @@ _ATTRS = dict(
         executable = True,
     ),
     profgen = attr.label(
-        default = "@androidsdk//:fail",
+        default = "//tools/android:profgen",
         cfg = "exec",
         executable = True,
     ),

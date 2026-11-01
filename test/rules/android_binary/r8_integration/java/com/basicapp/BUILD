@@ -1,4 +1,4 @@
-load("//rules:rules.bzl", "android_binary", "android_library")
+load("//rules:rules.bzl", "android_application", "android_binary", "android_library")
 
 [
     android_binary(
@@ -45,6 +45,26 @@ load("//rules:rules.bzl", "android_binary", "android_library")
         ),
     ]
 ]
+
+android_application(
+    name = "basic_app_R8_baseline_profile",
+    srcs = ["BasicActivity.java"],
+    bundle_config_file = "bundle_config.pb.json",
+    manifest = "AndroidManifest.xml",
+    manifest_values = {
+        "applicationId": "com.basicapp",
+        "versionCode": "1",
+    },
+    proguard_specs = ["proguard_obfuscate.cfg"],
+    resource_files = glob(["res/**"]),
+    visibility = ["//test/rules/android_binary/r8_integration:__pkg__"],
+    deps = [":lib_with_baseline_profile"],
+)
+
+android_library(
+    name = "lib_with_baseline_profile",
+    baseline_profiles = ["baseline-prof.txt"],
+)
 
 android_library(
     name = "basic_lib",

@@ -16,6 +16,7 @@
 load("//providers:providers.bzl", "AndroidDexInfo", "AndroidPreDexJarInfo", "ProguardMappingInfo", "AndroidOptimizationInfo")
 load("//rules:acls.bzl", "acls")
 load("//rules:android_neverlink_aspect.bzl", "StarlarkAndroidNeverlinkInfo")
+load("//rules:baseline_profiles.bzl", _baseline_profiles = "baseline_profiles")
 load("//rules:common.bzl", "common")
 load("//rules:dex.bzl", _dex = "dex")
 load("//rules:java.bzl", "java")
@@ -38,7 +39,7 @@ load("//rules/flags:flags.bzl", "read_possibly_native_flag", _flags = "flags")
 
 visibility(PROJECT_VISIBILITY)
 
-def process_r8(ctx, validation_ctx, jvm_ctx, packaged_resources_ctx, build_info_ctx, **_unused_ctxs):
+def process_r8(ctx, validation_ctx, jvm_ctx, packaged_resources_ctx, build_info_ctx, bp_ctx, **_unused_ctxs):
     """Runs R8 for desugaring, optimization, and dexing.
 
     Args:
@@ -47,6 +48,7 @@ def process_r8(ctx, validation_ctx, jvm_ctx, packaged_resources_ctx, build_info_
       jvm_ctx: Context from the java processor.
       packaged_resources_ctx: Context from resource processing.
       build_info_ctx: Context from build info processor.
+      bp_ctx: Context from the baseline profiles processor.
       **_unused_ctxs: Unused context.
 
     Returns:
@@ -137,9 +139,29 @@ def process_r8(ctx, validation_ctx, jvm_ctx, packaged_resources_ctx, build_info_
     args.add("--build-metadata-output", build_metadata_output)
 
     r8_inputs = [android_jar, deploy_jar] + proguard_specs
+    r8_outputs = [dexes_zip, proguard_mappings_output_file, build_metadata_output]
     if read_possibly_native_flag(ctx, "desugar_java8_libs") and desugared_lib_config:
         args.add("--desugared-lib", desugared_lib_config)
         r8_inputs.append(desugared_lib_config)
+
+    baseline_profile_rewritten = None
+    baseline_profile = bp_ctx.baseline_profile_output.baseline_profile if bp_ctx.baseline_profile_output else None
+    if baseline_profile:
+        # R8 silently drops wildcard rules, so they are expanded against the program classes first.
+        expanded_baseline_profile = _baseline_profiles.get_profile_artifact(ctx, "expanded-static-prof.txt")
+        _baseline_profiles.expand_wildcards(
+            ctx,
+            output = expanded_baseline_profile,
+            deploy_jar = deploy_jar,
+            profile = baseline_profile,
+            profgen = get_android_toolchain(ctx).profgen.files_to_run,
+            toolchain_type = ANDROID_TOOLCHAIN_TYPE,
+        )
+        baseline_profile_rewritten = _baseline_profiles.get_profile_artifact(ctx, "rewritten-merged-prof.txt")
+        args.add("--art-profile", expanded_baseline_profile)
+        args.add(baseline_profile_rewritten)
+        r8_inputs.append(expanded_baseline_profile)
+        r8_outputs.append(baseline_profile_rewritten)
 
     java.run(
         ctx = ctx,
@@ -147,7 +169,7 @@ def process_r8(ctx, validation_ctx, jvm_ctx, packaged_resources_ctx, build_info_
         executable = get_android_toolchain(ctx).r8.files_to_run,
         arguments = [args],
         inputs = depset(r8_inputs, transitive = [neverlink_jars]),
-        outputs = [dexes_zip, proguard_mappings_output_file, build_metadata_output],
+        outputs = r8_outputs,
         mnemonic = "AndroidR8",
         jvm_flags = ["-Xmx10G", "-XX:ThreadStackSize=2048"],
         progress_message = "R8 Optimizing, Desugaring, and Dexing %{label}",
@@ -193,6 +215,8 @@ def process_r8(ctx, validation_ctx, jvm_ctx, packaged_resources_ctx, build_info_
         name = "r8_ctx",
         value = struct(
             final_classes_dex_zip = final_classes_dex_zip,
+            proguard_mappings_file = proguard_mappings_output_file,
+            baseline_profile_rewritten = baseline_profile_rewritten,
             dex_info = android_dex_info,
             implicit_outputs = [proguard_mappings_output_file],
             providers = [

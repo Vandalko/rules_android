@@ -1,0 +1,3 @@
+Lcom/basicapp/BasicActivity;
+HSPLcom/basicapp/BasicActivity;->onCreate(Landroid/os/Bundle;)V
+HSPLcom/basicapp/BasicActivity$*;->**(**)**
