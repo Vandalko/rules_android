@@ -113,6 +113,8 @@ class R8IntegrationTest(unittest.TestCase):
           zf.read("BUNDLE-METADATA/com.android.tools.build.profiles/baseline.prof"),
           zf.read("BUNDLE-METADATA/com.android.tools.build.profiles/baseline.profm"),
       )
+      r8_metadata = json.loads(zf.read("BUNDLE-METADATA/com.android.tools/r8.json"))
+    self.assertTrue(r8_metadata["dexFiles"][0]["startup"])
 
     with open(
         os.path.join(app_directory, "basic_app_R8_baseline_profile_primary.prof")
@@ -128,19 +130,6 @@ class R8IntegrationTest(unittest.TestCase):
     self.assertNotIn("BasicActivity$1", dumped_profile)
     # Only in the startup profile, which R8 doesn't merge into the ART profile.
     self.assertIn("Lcom/basicapp/BasicActivity;-><init>()V", dumped_profile)
-
-  def test_r8_startup_profile(self):
-    with zipfile.ZipFile(
-        os.path.join(
-            "test/rules/android_binary/r8_integration/java/com/basicapp",
-            "basic_app_R8_baseline_profile_aab_unsigned.aab",
-        )
-    ) as zf:
-      r8_metadata = json.loads(zf.read("BUNDLE-METADATA/com.android.tools/r8.json"))
-    self.assertTrue(
-        r8_metadata["startupOptimization"]["isDexLayoutOptimizationEnabled"]
-    )
-    self.assertTrue(r8_metadata["dexFiles"][0]["startup"])
 
 
 if __name__ == "__main__":

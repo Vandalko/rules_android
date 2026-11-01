@@ -162,9 +162,6 @@ def process_r8(ctx, validation_ctx, jvm_ctx, packaged_resources_ctx, build_info_
         args.add_all(["--art-profile", expanded_baseline_profile, baseline_profile_rewritten])
         r8_inputs.append(expanded_baseline_profile)
         r8_outputs.append(baseline_profile_rewritten)
-        if not startup_profile and (_flags.get(ctx).use_baseline_as_startup_profile or
-                                    acls.use_baseline_as_startup_profile(str(ctx.label))):
-            startup_profile = expanded_baseline_profile
 
     if startup_profile:
         args.add("--startup-profile", startup_profile)
