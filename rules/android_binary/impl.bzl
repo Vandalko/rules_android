@@ -623,16 +623,16 @@ def is_instrumentation(ctx):
 def _process_baseline_profiles(ctx, validation_ctx, deploy_ctx, **_unused_ctxs):
     baseline_profile_output = None
     if ctx.attr.generate_art_profile:
-        # process_r8 expands wildcards against its own deploy jar, and doesn't take startup profiles.
+        # process_r8 expands wildcards against its own deploy jar.
         enable_optimizer_integration = acls.in_baseline_profiles_optimizer_integration(str(ctx.label)) and not validation_ctx.use_r8
         has_proguard_specs = bool(ctx.files.proguard_specs)
 
-        if ctx.files.startup_profiles and not enable_optimizer_integration:
+        if ctx.files.startup_profiles and not (enable_optimizer_integration or validation_ctx.use_r8):
             fail("Target %s is not allowed to set startup_profiles." % str(ctx.label))
 
         # Include startup profiles if the optimizer is disabled since profiles won't be merged
-        # in the optimizer.
-        startup_profiles = ctx.files.startup_profiles if enable_optimizer_integration and not has_proguard_specs else []
+        # in the optimizer. R8 doesn't merge them into the rewritten baseline profile either.
+        startup_profiles = ctx.files.startup_profiles if (enable_optimizer_integration and not has_proguard_specs) or validation_ctx.use_r8 else []
         if ctx.attr.baseline_profiles_override:
             transitive_profiles = depset(ctx.files.baseline_profiles_override + startup_profiles)
         else:

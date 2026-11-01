@@ -1,0 +1,2 @@
+Lcom/basicapp/BasicActivity;
+HSPLcom/basicapp/BasicActivity;-><init>()V

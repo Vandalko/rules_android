@@ -35,9 +35,9 @@ def _process(
         toolchain_type = None):
     """Processes all the transitive baseline profiles.
 
-    Baseline profiles propagated from libraries will be merged, and if optimizer integration is
-    enabled, startup profiles will be merged as well, and wildcards in baseline profiles will be
-    expanded.
+    Baseline profiles propagated from libraries will be merged, startup profiles will be merged
+    for optimized builds, and if optimizer integration is enabled, wildcards in baseline profiles
+    will be expanded.
 
     Args:
       ctx: The context.
@@ -67,19 +67,19 @@ def _process(
             toolchain_type = toolchain_type,
         )
 
-    if has_proguard_specs and enable_optimizer_integration:
-        # This is only needed for optimized builds since otherwise the dexer doesn't process this.
-        if startup_profiles:
-            startup_profile = _get_profile_artifact(ctx, "static-startup-prof.txt")
-            _merge(
-                ctx,
-                output = startup_profile,
-                inputs = ctx.files.startup_profiles,
-                mnemonic = "MergeStartupProfiles",
-                merge_tool = merge_tool,
-                toolchain_type = toolchain_type,
-            )
+    # This is only needed for optimized builds since otherwise the dexer doesn't process this.
+    if has_proguard_specs and startup_profiles:
+        startup_profile = _get_profile_artifact(ctx, "static-startup-prof.txt")
+        _merge(
+            ctx,
+            output = startup_profile,
+            inputs = startup_profiles,
+            mnemonic = "MergeStartupProfiles",
+            merge_tool = merge_tool,
+            toolchain_type = toolchain_type,
+        )
 
+    if has_proguard_specs and enable_optimizer_integration:
         # Wildcards only need to be expanded for optimized builds since if these aren't consumed by
         # the optimizer, they can just be expanded during profile compilation instead.
         # Start-up profiles are not expanded because it shouldn't be necessary as these should

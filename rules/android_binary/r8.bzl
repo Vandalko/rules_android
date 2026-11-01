@@ -146,6 +146,7 @@ def process_r8(ctx, validation_ctx, jvm_ctx, packaged_resources_ctx, build_info_
 
     baseline_profile_rewritten = None
     baseline_profile = bp_ctx.baseline_profile_output.baseline_profile if bp_ctx.baseline_profile_output else None
+    startup_profile = bp_ctx.baseline_profile_output.startup_profile if bp_ctx.baseline_profile_output else None
     if baseline_profile:
         # R8 silently drops wildcard rules, so they are expanded against the program classes first.
         expanded_baseline_profile = _baseline_profiles.get_profile_artifact(ctx, "expanded-static-prof.txt")
@@ -161,6 +162,13 @@ def process_r8(ctx, validation_ctx, jvm_ctx, packaged_resources_ctx, build_info_
         args.add_all(["--art-profile", expanded_baseline_profile, baseline_profile_rewritten])
         r8_inputs.append(expanded_baseline_profile)
         r8_outputs.append(baseline_profile_rewritten)
+        if not startup_profile and (_flags.get(ctx).use_baseline_as_startup_profile or
+                                    acls.use_baseline_as_startup_profile(str(ctx.label))):
+            startup_profile = expanded_baseline_profile
+
+    if startup_profile:
+        args.add("--startup-profile", startup_profile)
+        r8_inputs.append(startup_profile)
 
     java.run(
         ctx = ctx,

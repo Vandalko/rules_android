@@ -57,6 +57,7 @@ android_application(
     },
     proguard_specs = ["proguard_obfuscate.cfg"],
     resource_files = glob(["res/**"]),
+    startup_profiles = ["startup-prof.txt"],
     visibility = ["//test/rules/android_binary/r8_integration:__pkg__"],
     deps = [":lib_with_baseline_profile"],
 )
