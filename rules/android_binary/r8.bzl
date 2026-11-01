@@ -158,8 +158,7 @@ def process_r8(ctx, validation_ctx, jvm_ctx, packaged_resources_ctx, build_info_
             toolchain_type = ANDROID_TOOLCHAIN_TYPE,
         )
         baseline_profile_rewritten = _baseline_profiles.get_profile_artifact(ctx, "rewritten-merged-prof.txt")
-        args.add("--art-profile", expanded_baseline_profile)
-        args.add(baseline_profile_rewritten)
+        args.add_all(["--art-profile", expanded_baseline_profile, baseline_profile_rewritten])
         r8_inputs.append(expanded_baseline_profile)
         r8_outputs.append(baseline_profile_rewritten)
 

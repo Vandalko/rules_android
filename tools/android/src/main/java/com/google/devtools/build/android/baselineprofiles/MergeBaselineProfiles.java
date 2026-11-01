@@ -17,56 +17,33 @@
 package com.google.devtools.build.android.baselineprofiles;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
  * Merges human readable baseline profiles: {@code --input <profile>... --output <profile>}.
  *
- * <p>Rules are de-duplicated in first-seen order; profgen ORs the flags of rules that only differ
- * in their HSP prefix, so no further normalization is needed.
+ * <p>Only exact duplicates are dropped: profgen skips comments and blank lines, and ORs the flags
+ * of rules that only differ in their HSP prefix.
  */
 public final class MergeBaselineProfiles {
 
   private MergeBaselineProfiles() {}
 
   public static void main(String[] args) throws IOException {
-    List<Path> inputs = new ArrayList<>();
-    Path output = null;
-    for (int i = 0; i < args.length; i++) {
-      if (i + 1 >= args.length) {
-        throw new IllegalArgumentException("Missing value for " + args[i]);
-      }
-      switch (args[i]) {
-        case "--input":
-          inputs.add(Paths.get(args[++i]));
-          break;
-        case "--output":
-          output = Paths.get(args[++i]);
-          break;
-        default:
-          throw new IllegalArgumentException("Unknown argument: " + args[i]);
-      }
-    }
-    if (output == null) {
-      throw new IllegalArgumentException("Missing required flag --output");
-    }
-
     Set<String> rules = new LinkedHashSet<>();
-    for (Path input : inputs) {
-      for (String line : Files.readAllLines(input, StandardCharsets.UTF_8)) {
-        String rule = line.trim();
-        if (!rule.isEmpty() && !rule.startsWith("#")) {
-          rules.add(rule);
-        }
+    Path output = null;
+    for (int i = 0; i < args.length; i += 2) {
+      Path path = Paths.get(args[i + 1]);
+      if (args[i].equals("--output")) {
+        output = path;
+      } else {
+        rules.addAll(Files.readAllLines(path));
       }
     }
-    Files.write(output, rules, StandardCharsets.UTF_8);
+    Files.write(output, rules);
   }
 }

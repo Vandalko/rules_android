@@ -113,7 +113,6 @@ class R8IntegrationTest(unittest.TestCase):
           zf.read("BUNDLE-METADATA/com.android.tools.build.profiles/baseline.profm"),
       )
 
-    # The compiled profile dumped against the final dex, i.e. with minified names.
     with open(
         os.path.join(app_directory, "basic_app_R8_baseline_profile_primary.prof")
     ) as f:
@@ -124,7 +123,7 @@ class R8IntegrationTest(unittest.TestCase):
     )
     # Only matched by the wildcard rule, and only present if R8 rewrote it to
     # the renamed listener class.
-    self.assertRegex(dumped_profile, r"onClick\(Landroid/view/View;\)V")
+    self.assertIn("onClick(Landroid/view/View;)V", dumped_profile)
     self.assertNotIn("BasicActivity$1", dumped_profile)
 
 
