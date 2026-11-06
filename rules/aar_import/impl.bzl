@@ -16,7 +16,7 @@
 load("@rules_java//java/common:java_common.bzl", "java_common")
 load("@rules_java//java/common:java_info.bzl", "JavaInfo")
 load("@rules_java//java/common:proguard_spec_info.bzl", "ProguardSpecInfo")
-load("//providers:providers.bzl", "AndroidLintRulesInfo", "AndroidNativeLibsInfo")
+load("//providers:providers.bzl", "AndroidLintRulesInfo", "AndroidNativeLibsInfo", "BaselineProfileProvider")
 load(
     "//rules:acls.bzl",
     _acls = "acls",
@@ -49,6 +49,7 @@ visibility(PROJECT_VISIBILITY)
 
 RULE_PREFIX = "_aar"
 ANDROID_MANIFEST = "AndroidManifest.xml"
+BASELINE_PROFILE = "baseline-prof.txt"
 LINT_JAR = "lint.jar"
 
 def _create_aar_tree_artifact(ctx, name):
@@ -72,7 +73,7 @@ def extract_single_file(
         outputs = [out_file],
         command =
             """
-            if ! {create_empty_file} || {unzip_tool} -l {aar} | grep -q {file}; then
+            if ! {create_empty_file} || {unzip_tool} -l {aar} {file} > /dev/null; then
               {unzip_tool} -q {aar} {file} -d {dirname};
            else
                touch {dirname}/{file};
@@ -569,6 +570,21 @@ def impl(ctx):
         _get_android_toolchain(ctx).aar_embedded_proguard_extractor.files_to_run,
         extract_r8_rules = _flags.get(ctx).aar_import_extract_r8_rules if _acls.use_r8(str(ctx.label)) else False,
     ))
+
+    # Will be empty if there's no baseline-prof.txt file in the aar
+    baseline_profile = create_aar_artifact(ctx, BASELINE_PROFILE)
+    extract_single_file(
+        ctx,
+        baseline_profile,
+        aar,
+        BASELINE_PROFILE,
+        unzip_tool,
+        create_empty_file = True,
+    )
+    providers.append(BaselineProfileProvider(files = depset(
+        [baseline_profile],
+        transitive = [bp.files for bp in _utils.collect_providers(BaselineProfileProvider, ctx.attr.deps, ctx.attr.exports)],
+    )))
 
     lint_providers = _process_lint_rules(
         ctx,

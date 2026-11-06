@@ -1,4 +1,5 @@
-load("//rules:rules.bzl", "android_application", "android_binary", "android_library")
+load("@rules_java//java:java_library.bzl", "java_library")
+load("//rules:rules.bzl", "aar_import", "android_application", "android_binary", "android_library")
 
 [
     android_binary(
@@ -59,12 +60,42 @@ android_application(
     resource_files = glob(["res/**"]),
     startup_profiles = ["startup-prof.txt"],
     visibility = ["//test/rules/android_binary/r8_integration:__pkg__"],
-    deps = [":lib_with_baseline_profile"],
+    deps = [
+        ":aar_with_baseline_profile",
+        ":lib_with_baseline_profile",
+    ],
 )
 
 android_library(
     name = "lib_with_baseline_profile",
     baseline_profiles = ["baseline-prof.txt"],
+)
+
+aar_import(
+    name = "aar_with_baseline_profile",
+    aar = "aar_with_baseline_profile.aar",
+)
+
+genrule(
+    name = "gen_aar_with_baseline_profile",
+    srcs = [
+        "AndroidManifest_lib.xml",
+        "aar-baseline-prof.txt",
+        "aar_proguard.cfg",
+        ":aar_library",
+    ],
+    outs = ["aar_with_baseline_profile.aar"],
+    cmd = """$(execpath @bazel_tools//tools/zip:zipper) c $@ \
+        AndroidManifest.xml=$(execpath AndroidManifest_lib.xml) \
+        baseline-prof.txt=$(execpath aar-baseline-prof.txt) \
+        classes.jar=$(execpath :aar_library) \
+        proguard.txt=$(execpath aar_proguard.cfg)""",
+    tools = ["@bazel_tools//tools/zip:zipper"],
+)
+
+java_library(
+    name = "aar_library",
+    srcs = ["AarLibrary.java"],
 )
 
 android_library(

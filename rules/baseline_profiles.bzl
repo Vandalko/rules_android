@@ -185,6 +185,8 @@ def _merge(
     args = ctx.actions.args()
     args.add_all(inputs, before_each = "--input")
     args.add("--output", output)
+    args.set_param_file_format("multiline")
+    args.use_param_file("@%s", use_always = True)
 
     ctx.actions.run(
         executable = merge_tool,

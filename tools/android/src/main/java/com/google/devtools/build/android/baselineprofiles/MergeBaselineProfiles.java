@@ -24,7 +24,8 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
- * Merges human readable baseline profiles: {@code --input <profile>... --output <profile>}.
+ * Merges human readable baseline profiles: {@code --input <profile>... --output <profile>}, read
+ * one argument per line from an {@code @<params file>}.
  *
  * <p>Only exact duplicates are dropped: profgen skips comments and blank lines, and ORs the flags
  * of rules that only differ in their HSP prefix.
@@ -34,6 +35,7 @@ public final class MergeBaselineProfiles {
   private MergeBaselineProfiles() {}
 
   public static void main(String[] args) throws IOException {
+    args = Files.readAllLines(Paths.get(args[0].substring(1))).toArray(new String[0]);
     Set<String> rules = new LinkedHashSet<>();
     Path output = null;
     for (int i = 0; i < args.length; i += 2) {

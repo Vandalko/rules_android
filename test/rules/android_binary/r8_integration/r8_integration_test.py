@@ -130,6 +130,8 @@ class R8IntegrationTest(unittest.TestCase):
     self.assertNotIn("BasicActivity$1", dumped_profile)
     # Only in the startup profile, which R8 doesn't merge into the ART profile.
     self.assertIn("Lcom/basicapp/BasicActivity;-><init>()V", dumped_profile)
+    # Only in the baseline profile packaged in the AAR.
+    self.assertIn("Lcom/basicapp/AarLibrary;->run()V", dumped_profile)
 
 
 if __name__ == "__main__":
