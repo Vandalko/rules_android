@@ -250,6 +250,13 @@ java_import(
     visibility = ["//visibility:public"],
 )
 
+# R8 jar used by D8, R8 and the other dexing tools; override to use a different R8 version.
+label_flag(
+    name = "r8_lib",
+    build_setting_default = "@rules_android_maven//:com_android_tools_r8",
+    visibility = ["//visibility:public"],
+)
+
 # Flags to make OpenJDK perform reasonably on D8.
 _JVM_FLAGS = [
     "-XX:+TieredCompilation",
@@ -264,7 +271,7 @@ java_binary(
     jvm_flags = _JVM_FLAGS,
     main_class = "com.android.tools.r8.D8",
     visibility = ["//visibility:public"],
-    runtime_deps = ["@rules_android_maven//:com_android_tools_r8"],
+    runtime_deps = [":r8_lib"],
 )
 
 java_binary(
@@ -272,7 +279,7 @@ java_binary(
     jvm_flags = _JVM_FLAGS,
     main_class = "com.android.tools.r8.R8",
     visibility = ["//visibility:public"],
-    runtime_deps = ["@rules_android_maven//:com_android_tools_r8"],
+    runtime_deps = [":r8_lib"],
 )
 
 java_binary(
@@ -280,7 +287,7 @@ java_binary(
     jvm_flags = _JVM_FLAGS,
     main_class = "com.android.tools.r8.tracereferences.TraceReferences",
     visibility = ["//visibility:public"],
-    runtime_deps = ["@rules_android_maven//:com_android_tools_r8"],
+    runtime_deps = [":r8_lib"],
 )
 
 java_binary(
@@ -380,7 +387,7 @@ java_binary(
         "-Xmx8g",
     ],
     main_class = "com.android.tools.r8.GlobalSyntheticsGenerator",
-    runtime_deps = ["@rules_android_maven//:com_android_tools_r8"],
+    runtime_deps = [":r8_lib"],
 )
 
 alias(

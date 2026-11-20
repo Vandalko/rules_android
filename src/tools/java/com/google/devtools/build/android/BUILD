@@ -130,7 +130,7 @@ java_library(
     ],
     # Do not sort: Deps order matters until android_tools.jar deps are deleted (b/393172052).
     deps = [
-        "@rules_android_maven//:com_android_tools_r8",
+        "//tools/android:r8_lib",
         "@rules_android_maven//:com_beust_jcommander",
         "@rules_android_maven//:com_google_guava_guava",
         ":android_builder_lib",
